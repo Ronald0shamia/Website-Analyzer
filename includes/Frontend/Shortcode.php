@@ -45,15 +45,6 @@ class Shortcode {
 			true
 		);
 
-		// jsPDF for report generation.
-		wp_enqueue_script(
-			'jspdf',
-			'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-			[],
-			'2.5.1',
-			true
-		);
-
 		wp_localize_script(
 			'website-analyzer-frontend',
 			'waConfig',
@@ -62,7 +53,7 @@ class Shortcode {
 				'nonce'       => wp_create_nonce( 'wa_analyze_nonce' ),
 				'companyName' => esc_js( Settings::get( 'company_name', get_bloginfo( 'name' ) ) ),
 				'pdfLogo'     => esc_js( Settings::get( 'pdf_logo', '' ) ),
-				'hasGemini'   => ! empty( Settings::get( 'gemini_api_key', '' ) ),
+				'hasGemini'   => current_user_can( 'manage_options' ) && ! empty( Settings::get( 'gemini_api_key', '' ) ),
 				'i18n'        => [
 					'analyzing'       => __( 'Analyzing…', 'website-analyzer' ),
 					'complete'        => __( 'Analysis complete', 'website-analyzer' ),

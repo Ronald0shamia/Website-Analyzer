@@ -11,6 +11,7 @@ use WebsiteAnalyzer\Admin\Settings;
 use WebsiteAnalyzer\Statistics\StatisticsManager;
 use WebsiteAnalyzer\Helpers\RateLimiter;
 use WebsiteAnalyzer\Helpers\IpHelper;
+use WebsiteAnalyzer\Helpers\UrlValidator;
 
 /**
  * Handles all AJAX requests for the plugin.
@@ -27,7 +28,6 @@ class AjaxHandler {
 		add_action( 'wp_ajax_nopriv_wa_analyze', [ $this, 'handle_analyze' ] );
 
 		add_action( 'wp_ajax_wa_ai_analyze', [ $this, 'handle_ai_analyze' ] );
-		add_action( 'wp_ajax_nopriv_wa_ai_analyze', [ $this, 'handle_ai_analyze' ] );
 
 		add_action( 'wp_ajax_wa_get_statistics', [ $this, 'handle_get_statistics' ] );
 		add_action( 'wp_ajax_wa_clear_statistics', [ $this, 'handle_clear_statistics' ] );
@@ -41,15 +41,11 @@ class AjaxHandler {
 	public function handle_analyze(): void {
 		check_ajax_referer( 'wa_analyze_nonce', 'nonce' );
 
-		$url = isset( $_POST['url'] ) ? sanitize_url( wp_unslash( $_POST['url'] ) ) : '';
+		$raw_url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+		$url     = UrlValidator::normalize_public_url( $raw_url );
 
-		if ( empty( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid URL provided.', 'website-analyzer' ) ], 400 );
-		}
-
-		// Ensure URL has scheme.
-		if ( ! preg_match( '#^https?://#', $url ) ) {
-			$url = 'https://' . $url;
+		if ( is_wp_error( $url ) ) {
+			wp_send_json_error( [ 'message' => $url->get_error_message() ], 400 );
 		}
 
 		// Rate limiting.
@@ -74,7 +70,7 @@ class AjaxHandler {
 				'domain'   => wp_parse_url( $url, PHP_URL_HOST ) ?? $url,
 				'duration' => $duration,
 				'success'  => true,
-				'ip'       => Settings::get( 'store_ip', true ) ? $ip : '',
+				'ip'       => '',
 				'user_id'  => get_current_user_id(),
 			] );
 
@@ -87,11 +83,11 @@ class AjaxHandler {
 				'domain'   => wp_parse_url( $url, PHP_URL_HOST ) ?? $url,
 				'duration' => $duration,
 				'success'  => false,
-				'ip'       => Settings::get( 'store_ip', true ) ? $ip : '',
+				'ip'       => '',
 				'user_id'  => get_current_user_id(),
 			] );
 
-			wp_send_json_error( [ 'message' => $e->getMessage() ], 500 );
+			wp_send_json_error( [ 'message' => esc_html( $e->getMessage() ) ], 500 );
 		}
 	}
 
@@ -102,6 +98,16 @@ class AjaxHandler {
 	 */
 	public function handle_ai_analyze(): void {
 		check_ajax_referer( 'wa_analyze_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => __( 'AI analysis is restricted to administrators.', 'website-analyzer' ) ], 403 );
+		}
+
+		$ip           = IpHelper::get_ip();
+		$rate_limiter = new RateLimiter();
+		if ( ! $rate_limiter->check( 'ai-' . $ip, 5 ) ) {
+			wp_send_json_error( [ 'message' => __( 'AI rate limit reached. Please try again later.', 'website-analyzer' ) ], 429 );
+		}
 
 		$api_key = Settings::get( 'gemini_api_key', '' );
 		if ( empty( $api_key ) ) {

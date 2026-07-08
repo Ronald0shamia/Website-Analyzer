@@ -10,6 +10,7 @@
 namespace WebsiteAnalyzer\API;
 
 use WebsiteAnalyzer\Admin\Settings;
+use WebsiteAnalyzer\Helpers\UrlValidator;
 
 /**
  * Fetches and analyzes a given URL from the server side.
@@ -69,27 +70,85 @@ class WebsiteAnalyzerService {
 	 * @throws \Exception On request failure.
 	 */
 	private function fetch_url(): void {
-		$timeout = (int) Settings::get( 'analysis_timeout', 30 );
+		$timeout = min( 12, (int) Settings::get( 'analysis_timeout', 12 ) );
+		$url     = $this->url;
 
 		$args = [
-			'timeout'    => $timeout,
-			'user-agent' => 'Mozilla/5.0 (compatible; WebsiteAnalyzer/1.0; +https://example.com)',
-			'sslverify'  => true,
-			'redirection' => 5,
+			'timeout'             => $timeout,
+			'user-agent'          => 'Mozilla/5.0 (compatible; WebsiteAnalyzer/1.0; +https://example.com)',
+			'sslverify'           => true,
+			'redirection'         => 0,
+			'limit_response_size' => 1048576,
+			'reject_unsafe_urls'  => true,
 		];
 
-		$response = wp_remote_get( $this->url, $args );
+		for ( $redirects = 0; $redirects <= 5; $redirects++ ) {
+			$validated_url = UrlValidator::normalize_public_url( $url );
+			if ( is_wp_error( $validated_url ) ) {
+				throw new \Exception( $validated_url->get_error_message() );
+			}
 
-		if ( is_wp_error( $response ) ) {
-			throw new \Exception( $response->get_error_message() );
+			$response = wp_remote_get( $validated_url, $args );
+
+			if ( is_wp_error( $response ) ) {
+				throw new \Exception( $response->get_error_message() );
+			}
+
+			$code = wp_remote_retrieve_response_code( $response );
+			if ( $code >= 300 && $code < 400 ) {
+				$location = wp_remote_retrieve_header( $response, 'location' );
+				if ( empty( $location ) ) {
+					break;
+				}
+
+				$url = $this->build_redirect_url( $validated_url, $location );
+				continue;
+			}
+
+			$this->url      = $validated_url;
+			$this->response = [
+				'code'     => $code,
+				'headers'  => wp_remote_retrieve_headers( $response )->getAll(),
+				'body'     => wp_remote_retrieve_body( $response ),
+				'response' => $response,
+			];
+
+			return;
 		}
 
-		$this->response = [
-			'code'     => wp_remote_retrieve_response_code( $response ),
-			'headers'  => wp_remote_retrieve_headers( $response )->getAll(),
-			'body'     => wp_remote_retrieve_body( $response ),
-			'response' => $response,
-		];
+		throw new \Exception( __( 'Too many redirects.', 'website-analyzer' ) );
+	}
+
+	/**
+	 * Build an absolute redirect URL from a Location header.
+	 *
+	 * @param string $base_url Current URL.
+	 * @param string $location Redirect location.
+	 * @return string
+	 */
+	private function build_redirect_url( string $base_url, string $location ): string {
+		$location = trim( $location );
+
+		if ( preg_match( '#^https?://#i', $location ) ) {
+			return $location;
+		}
+
+		$base   = wp_parse_url( $base_url );
+		$scheme = $base['scheme'] ?? 'https';
+		$host   = $base['host'] ?? '';
+
+		if ( str_starts_with( $location, '//' ) ) {
+			return $scheme . ':' . $location;
+		}
+
+		if ( str_starts_with( $location, '/' ) ) {
+			return $scheme . '://' . $host . $location;
+		}
+
+		$path = $base['path'] ?? '/';
+		$dir  = preg_replace( '#/[^/]*$#', '/', $path );
+
+		return $scheme . '://' . $host . $dir . $location;
 	}
 
 	/**
@@ -344,7 +403,15 @@ class WebsiteAnalyzerService {
 		$base     = ( $parsed['scheme'] ?? 'https' ) . '://' . ( $parsed['host'] ?? '' );
 		$robots_url = $base . '/robots.txt';
 
-		$response = wp_remote_get( $robots_url, [ 'timeout' => 10 ] );
+		$response = wp_remote_get(
+			$robots_url,
+			[
+				'timeout'             => 8,
+				'redirection'         => 0,
+				'limit_response_size' => 262144,
+				'reject_unsafe_urls'  => true,
+			]
+		);
 		if ( is_wp_error( $response ) ) {
 			return [ 'exists' => false, 'content' => '', 'blocks_all' => false ];
 		}
@@ -377,7 +444,15 @@ class WebsiteAnalyzerService {
 
 		foreach ( $urls as $path ) {
 			$sitemap_url = $base . $path;
-			$response    = wp_remote_get( $sitemap_url, [ 'timeout' => 10 ] );
+			$response    = wp_remote_get(
+				$sitemap_url,
+				[
+					'timeout'             => 8,
+					'redirection'         => 0,
+					'limit_response_size' => 262144,
+					'reject_unsafe_urls'  => true,
+				]
+			);
 			if ( ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) === 200 ) {
 				return [
 					'exists' => true,

@@ -91,17 +91,9 @@ class AdminMenu {
 		);
 
 		wp_enqueue_script(
-			'chart-js',
-			'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-			[],
-			'4.4.0',
-			true
-		);
-
-		wp_enqueue_script(
 			'website-analyzer-admin',
 			WEBSITE_ANALYZER_URL . 'assets/js/admin.js',
-			[ 'jquery', 'chart-js' ],
+			[ 'jquery' ],
 			WEBSITE_ANALYZER_VERSION,
 			true
 		);

@@ -147,11 +147,11 @@ class Settings {
 	public function get_defaults(): array {
 		return [
 			'gemini_api_key'        => '',
-			'analysis_timeout'      => 30,
+			'analysis_timeout'      => 12,
 			'max_analyses_per_hour' => 10,
 			'company_name'          => get_bloginfo( 'name' ),
 			'pdf_logo'              => '',
-			'store_ip'              => true,
+			'store_ip'              => false,
 			'disable_cache'         => false,
 		];
 	}
@@ -182,11 +182,11 @@ class Settings {
 		$sanitized['max_analyses_per_hour'] = absint( $input['max_analyses_per_hour'] ?? 10 );
 		$sanitized['company_name']          = sanitize_text_field( $input['company_name'] ?? '' );
 		$sanitized['pdf_logo']              = esc_url_raw( $input['pdf_logo'] ?? '' );
-		$sanitized['store_ip']              = ! empty( $input['store_ip'] );
+		$sanitized['store_ip']              = false;
 		$sanitized['disable_cache']         = ! empty( $input['disable_cache'] );
 
 		// Clamp values.
-		$sanitized['analysis_timeout']      = max( 10, min( 120, $sanitized['analysis_timeout'] ) );
+		$sanitized['analysis_timeout']      = max( 5, min( 12, $sanitized['analysis_timeout'] ) );
 		$sanitized['max_analyses_per_hour'] = max( 1, min( 100, $sanitized['max_analyses_per_hour'] ) );
 
 		return $sanitized;
@@ -223,14 +223,14 @@ class Settings {
 	 * @return void
 	 */
 	public function render_timeout_field(): void {
-		$value = self::get( 'analysis_timeout', 30 );
+		$value = self::get( 'analysis_timeout', 12 );
 		?>
 		<input
 			type="number"
 			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[analysis_timeout]"
 			value="<?php echo esc_attr( (string) $value ); ?>"
-			min="10"
-			max="120"
+			min="5"
+			max="12"
 			class="small-text"
 		/>
 		<p class="description"><?php esc_html_e( 'Timeout in seconds (10–120).', 'website-analyzer' ); ?></p>
@@ -299,17 +299,17 @@ class Settings {
 	 * @return void
 	 */
 	public function render_store_ip_field(): void {
-		$value = self::get( 'store_ip', true );
 		?>
 		<label>
 			<input
 				type="checkbox"
 				name="<?php echo esc_attr( self::OPTION_NAME ); ?>[store_ip]"
 				value="1"
-				<?php checked( $value ); ?>
+				disabled
 			/>
 			<?php esc_html_e( 'Store visitor IP addresses in statistics', 'website-analyzer' ); ?>
 		</label>
+		<p class="description"><?php esc_html_e( 'Disabled for privacy. IP addresses are used only transiently for rate limiting and are not stored in reports or statistics.', 'website-analyzer' ); ?></p>
 		<?php
 	}
 

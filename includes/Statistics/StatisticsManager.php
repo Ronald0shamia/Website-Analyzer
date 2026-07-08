@@ -88,9 +88,9 @@ class StatisticsManager {
 				'domain'     => sanitize_text_field( $data['domain'] ?? '' ),
 				'duration_ms'=> absint( $data['duration'] ?? 0 ),
 				'success'    => (int) ( $data['success'] ?? true ),
-				'ip_address' => sanitize_text_field( $data['ip'] ?? '' ),
+				'ip_address' => '',
 				'user_id'    => absint( $data['user_id'] ?? 0 ),
-				'user_agent' => sanitize_text_field( isset( $_SERVER['HTTP_USER_AGENT'] ) ? wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) : '' ),
+				'user_agent' => '',
 				'created_at' => current_time( 'mysql' ),
 			],
 			[ '%s', '%d', '%d', '%s', '%d', '%s', '%s' ]
