@@ -1,18 +1,21 @@
 <?php
 /**
- * Plugin Name: MRS Website Analyzer
- * Plugin URI: https://example.com/website-analyzer
- * Description: Browserbasierte Website-Analyse mit Exporten, Admin-Einstellungen und Nutzungsstatistiken.
- * Version: 1.0.0
- * Requires at least: 6.4
- * Requires PHP: 8.0
- * Author: Website Analyzer
- * License: GPL-2.0-or-later
+ * Plugin Name: Website Analyzer
+ * Plugin URI:  https://example.com/website-analyzer
+ * Description: Comprehensive website analysis tool with AI-powered insights via Google Gemini API.
+ * Version:     1.0.0
+ * Author:      Website Analyzer
+ * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: website-analyzer
+ * Domain Path: /languages
+ * Requires at least: 6.0
+ * Requires PHP: 8.0
  *
  * @package WebsiteAnalyzer
  */
+
+namespace WebsiteAnalyzer;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,18 +23,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'WEBSITE_ANALYZER_VERSION', '1.0.0' );
 define( 'WEBSITE_ANALYZER_FILE', __FILE__ );
-define( 'WEBSITE_ANALYZER_PATH', plugin_dir_path( __FILE__ ) );
+define( 'WEBSITE_ANALYZER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WEBSITE_ANALYZER_URL', plugin_dir_url( __FILE__ ) );
+define( 'WEBSITE_ANALYZER_BASENAME', plugin_basename( __FILE__ ) );
 
-require_once WEBSITE_ANALYZER_PATH . 'includes/class-website-analyzer-autoloader.php';
+// PSR-4 Autoloader.
+spl_autoload_register( function ( string $class ): void {
+	$prefix   = 'WebsiteAnalyzer\\';
+	$base_dir = WEBSITE_ANALYZER_DIR . 'includes/';
 
-Website_Analyzer_Autoloader::register();
-
-register_activation_hook( __FILE__, array( Website_Analyzer_Activator::class, 'activate' ) );
-
-add_action(
-	'plugins_loaded',
-	static function (): void {
-		Website_Analyzer_Plugin::instance()->boot();
+	if ( strncmp( $prefix, $class, strlen( $prefix ) ) !== 0 ) {
+		return;
 	}
-);
+
+	$relative_class = substr( $class, strlen( $prefix ) );
+	$file           = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+
+	if ( file_exists( $file ) ) {
+		require $file;
+	}
+} );
+
+/**
+ * Bootstrap the plugin.
+ */
+function website_analyzer_init(): void {
+	$plugin = Plugin::get_instance();
+	$plugin->init();
+}
+
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\website_analyzer_init' );
+
+register_activation_hook( __FILE__, [ 'WebsiteAnalyzer\\Plugin', 'activate' ] );
+register_deactivation_hook( __FILE__, [ 'WebsiteAnalyzer\\Plugin', 'deactivate' ] );

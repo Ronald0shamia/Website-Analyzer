@@ -1,0 +1,113 @@
+/**
+ * Website Analyzer — Admin Styles
+ *
+ * @package WebsiteAnalyzer
+ */
+
+/* ── Variables ─────────────────────────────────────────────────── */
+.wa-admin-wrap {
+	--wa-primary:   #2563eb;
+	--wa-success:   #16a34a;
+	--wa-warn:      #d97706;
+	--wa-error:     #dc2626;
+	--wa-border:    #e2e8f0;
+	--wa-surface:   #ffffff;
+	--wa-surface-2: #f8fafc;
+	--wa-text:      #0f172a;
+	--wa-muted:     #64748b;
+	--wa-radius:    10px;
+	--wa-shadow:    0 1px 3px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+}
+
+/* ── Stat Cards ────────────────────────────────────────────────── */
+.wa-admin-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+	gap: 16px;
+	margin: 20px 0 28px;
+}
+
+.wa-admin-card {
+	background: var(--wa-surface);
+	border: 1px solid var(--wa-border);
+	border-radius: var(--wa-radius);
+	padding: 22px 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	box-shadow: var(--wa-shadow);
+}
+
+.wa-admin-card-value {
+	font-size: 2.2rem;
+	font-weight: 800;
+	color: var(--wa-primary);
+	line-height: 1;
+}
+
+.wa-admin-card-label {
+	font-size: .85rem;
+	color: var(--wa-muted);
+	text-transform: uppercase;
+	letter-spacing: .07em;
+}
+
+/* ── Panel ─────────────────────────────────────────────────────── */
+.wa-admin-panel {
+	background: var(--wa-surface);
+	border: 1px solid var(--wa-border);
+	border-radius: var(--wa-radius);
+	padding: 24px;
+	box-shadow: var(--wa-shadow);
+	margin-bottom: 24px;
+}
+
+.wa-admin-panel h2 {
+	font-size: 1.1rem;
+	margin: 0 0 18px;
+}
+
+/* ── Filter Nav ────────────────────────────────────────────────── */
+.wa-filter-nav {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 16px 0;
+}
+
+.wa-filter-link {
+	padding: 7px 14px;
+	border-radius: 6px;
+	font-size: .875rem;
+	color: var(--wa-muted);
+	text-decoration: none;
+	border: 1px solid var(--wa-border);
+	transition: all .15s;
+}
+
+.wa-filter-link:hover { color: var(--wa-primary); border-color: var(--wa-primary); }
+.wa-filter-link.active { background: var(--wa-primary); color: #fff; border-color: var(--wa-primary); font-weight: 600; }
+
+.wa-clear-btn { margin-left: auto !important; }
+
+/* ── Total Count ───────────────────────────────────────────────── */
+.wa-total-count {
+	font-size: .875rem;
+	color: var(--wa-muted);
+	margin: 0 0 12px;
+}
+
+/* ── Badges ────────────────────────────────────────────────────── */
+.wa-badge {
+	display: inline-block;
+	font-size: .72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .07em;
+	padding: 2px 8px;
+	border-radius: 99px;
+}
+
+.wa-badge-success { background: #dcfce7; color: var(--wa-success); }
+.wa-badge-error   { background: #fee2e2; color: var(--wa-error); }

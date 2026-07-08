@@ -1,0 +1,17 @@
+{
+    "name": "website-analyzer/website-analyzer",
+    "description": "WordPress Website Analyzer Plugin",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WebsiteAnalyzer\\": "includes/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
