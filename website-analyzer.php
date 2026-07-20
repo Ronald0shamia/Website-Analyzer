@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: Website Analyzer
- * Plugin URI:  https://example.com/website-analyzer
+ * Plugin Name: MRS Website Analyzer
+ * Plugin URI:  https://mrs-dev.com/loesungen/website-analyzer
  * Description: Comprehensive website analysis tool with AI-powered insights via Google Gemini API.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Website Analyzer
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WEBSITE_ANALYZER_VERSION', '1.0.0' );
+define( 'WEBSITE_ANALYZER_VERSION', '1.0.1' );
 define( 'WEBSITE_ANALYZER_FILE', __FILE__ );
 define( 'WEBSITE_ANALYZER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WEBSITE_ANALYZER_URL', plugin_dir_url( __FILE__ ) );
